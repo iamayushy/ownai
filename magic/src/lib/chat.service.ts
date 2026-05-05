@@ -12,7 +12,10 @@ export interface ChatResponse {
 }
 
 export async function sendChatMessage(message: string, userId?: string): Promise<ChatResponse> {
-  const response = await fetch(`/api/chat`, {
+  const baseUrl = import.meta.env.VITE_API_URL || "";
+  const endpoint = `${baseUrl}/api/chat`;
+  
+  const response = await fetch(endpoint, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -22,6 +25,7 @@ export async function sendChatMessage(message: string, userId?: string): Promise
 
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
+    console.log(errorData);
     throw new Error(errorData.error || 'Failed to send message');
   }
 

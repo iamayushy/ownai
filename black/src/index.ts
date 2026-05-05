@@ -1,12 +1,23 @@
 import { Hono } from 'hono'
+import { cors } from 'hono/cors'
 import { z } from 'zod'
 import { zValidator } from '@hono/zod-validator'
 import { initializeChat, sendMessage } from './services/hostinger.service'
 
 const app = new Hono()
 
+// CORS Configuration
+app.use('*', cors({
+  origin: ['https://ownai.koachbase.com', 'http://localhost:5173'],
+  allowMethods: ['POST', 'GET', 'OPTIONS'],
+  allowHeaders: ['Content-Type', 'Authorization'],
+  exposeHeaders: ['Content-Length'],
+  maxAge: 600,
+  credentials: true,
+}))
+
 // Health check
-app.get('/', (c) => c.json({ status: 'ok', service: 'Hostinger Chat Proxy' }))
+app.get('/', (c) => c.json({ status: 'ok', service: 'Chat Proxy' }))
 
 // Chat Schema
 const chatSchema = z.object({

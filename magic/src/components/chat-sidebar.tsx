@@ -1,20 +1,11 @@
-import {
-  Sidebar,
-  SidebarContent,
-  SidebarGroup,
-  SidebarGroupContent,
-  SidebarGroupLabel,
-  SidebarHeader,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem
-} from "@/components/ui/sidebar"
-import { ChatCircleIcon, PlusIcon, RobotIcon } from "@phosphor-icons/react"
-import { cn } from "@/lib/utils";
+import * as React from 'react'
+import { MagnifyingGlassIcon, PlusIcon, ChatCircleIcon, SparkleIcon } from "@phosphor-icons/react"
+import { cn } from "@/lib/utils"
 
 interface ChatSession {
   id: string;
   title: string;
+  updatedAt: number;
 }
 
 interface ChatSidebarProps {
@@ -24,74 +15,153 @@ interface ChatSidebarProps {
   onNewChat: () => void;
 }
 
+function groupSessions(sessions: ChatSession[]) {
+  const now = Date.now()
+  const DAY = 86_400_000
+  return {
+    today: sessions.filter(s => now - s.updatedAt < DAY),
+    yesterday: sessions.filter(s => now - s.updatedAt >= DAY && now - s.updatedAt < 2 * DAY),
+    older: sessions.filter(s => now - s.updatedAt >= 2 * DAY),
+  }
+}
+
+function SessionItem({
+  session,
+  isActive,
+  onClick,
+}: {
+  session: ChatSession
+  isActive: boolean
+  onClick: () => void
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className={cn(
+        "w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-[13px] text-left transition-all duration-150",
+        isActive
+          ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
+          : "text-muted-foreground hover:text-foreground hover:bg-surface-1"
+      )}
+    >
+      <ChatCircleIcon
+        size={14}
+        weight={isActive ? "fill" : "regular"}
+        className={cn(
+          "shrink-0 mt-px transition-colors",
+          isActive ? "text-primary" : "text-muted-foreground/50"
+        )}
+      />
+      <span className="truncate flex-1 leading-snug">{session.title}</span>
+    </button>
+  )
+}
+
+function SessionGroup({
+  label,
+  sessions,
+  activeSessionId,
+  onSessionSelect,
+}: {
+  label: string
+  sessions: ChatSession[]
+  activeSessionId?: string
+  onSessionSelect: (id: string) => void
+}) {
+  if (sessions.length === 0) return null
+
+  return (
+    <div className="mb-5">
+      <p className="px-3 mb-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground/40 select-none">
+        {label}
+      </p>
+      <div className="space-y-px">
+        {sessions.map(s => (
+          <SessionItem
+            key={s.id}
+            session={s}
+            isActive={activeSessionId === s.id}
+            onClick={() => onSessionSelect(s.id)}
+          />
+        ))}
+      </div>
+    </div>
+  )
+}
+
 export function ChatSidebar({
   sessions,
   activeSessionId,
   onSessionSelect,
-  onNewChat
+  onNewChat,
 }: ChatSidebarProps) {
+  const [search, setSearch] = React.useState("")
+
+  const filtered = React.useMemo(
+    () => sessions.filter(s => s.title.toLowerCase().includes(search.toLowerCase())),
+    [sessions, search]
+  )
+
+  const groups = React.useMemo(() => groupSessions(filtered), [filtered])
+  const hasAny = sessions.length > 0
+  const hasResults = filtered.length > 0
+
   return (
-    <Sidebar className="border-r border-border/50 bg-sidebar/50 backdrop-blur-xl">
-      <SidebarHeader className="px-4 pt-6 pb-4">
-        <div className="flex items-center gap-3 px-1 mb-6">
-          <div className="h-8 w-8 rounded-xl bg-primary flex items-center justify-center shrink-0 shadow-lg shadow-primary/20">
-            <RobotIcon size={18} weight="fill" className="text-white" />
+    <div className="flex h-full w-[256px] shrink-0 flex-col bg-sidebar border-r border-border">
+      {/* Brand */}
+      <div className="px-4 pt-5 pb-4">
+        <div className="flex items-center gap-2.5 mb-5">
+          <div className="h-7 w-7 rounded-lg bg-primary/12 border border-primary/20 flex items-center justify-center shrink-0">
+            <SparkleIcon size={14} weight="fill" className="text-primary" />
           </div>
-          <span className="text-lg font-bold tracking-tight">OwnAI</span>
+          <span className="text-[15px] font-bold tracking-tight text-foreground">OwnAI</span>
         </div>
+
         <button
           onClick={onNewChat}
-          className={cn(
-            "flex h-11 w-full items-center justify-center gap-2 rounded-xl px-4 text-sm font-semibold transition-all duration-200",
-            "bg-primary text-primary-foreground shadow-md shadow-primary/10 hover:bg-primary/90 hover:shadow-lg active:scale-[0.98]"
-          )}
+          className="flex h-9 w-full items-center justify-center gap-2 rounded-xl bg-primary text-primary-foreground text-[13px] font-semibold shadow-sm hover:bg-primary/90 transition-all duration-150 active:scale-[0.98]"
         >
-          <PlusIcon size={18} weight="bold" />
-          New Chat
+          <PlusIcon size={15} weight="bold" />
+          New chat
         </button>
-      </SidebarHeader>
+      </div>
 
-      <SidebarContent className="px-3">
-        <SidebarGroup>
-          <SidebarGroupLabel className="px-2 mb-2 text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground/50">
-            Conversations
-          </SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu className="gap-1">
-              {sessions.length === 0 ? (
-                <div className="px-3 py-4 text-center">
-                  <p className="text-[11px] text-muted-foreground/40 italic">No history yet</p>
-                </div>
-              ) : (
-                sessions.map((session) => (
-                  <SidebarMenuItem key={session.id}>
-                    <SidebarMenuButton
-                      isActive={activeSessionId === session.id}
-                      onClick={() => onSessionSelect(session.id)}
-                      className={cn(
-                        "h-10 gap-3 px-3 text-sm rounded-xl transition-all duration-200",
-                        activeSessionId === session.id
-                          ? "bg-sidebar-accent text-sidebar-accent-foreground font-semibold shadow-sm"
-                          : "text-muted-foreground hover:text-sidebar-foreground hover:bg-sidebar-accent/50"
-                      )}
-                    >
-                      <ChatCircleIcon
-                        size={16}
-                        weight={activeSessionId === session.id ? "fill" : "regular"}
-                        className={cn(
-                          "shrink-0",
-                          activeSessionId === session.id ? "text-primary" : "text-muted-foreground/60"
-                        )}
-                      />
-                      <span className="truncate flex-1">{session.title}</span>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                ))
-              )}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-      </SidebarContent>
-    </Sidebar>
+      {/* Search */}
+      <div className="px-3 pb-3">
+        <div className="flex items-center gap-2 h-8 rounded-lg bg-surface-1 border border-stroke-1 px-3 focus-within:border-primary/30 transition-colors">
+          <MagnifyingGlassIcon size={13} className="text-muted-foreground/50 shrink-0" />
+          <input
+            type="text"
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            placeholder="Search chats…"
+            className="flex-1 bg-transparent text-[12px] text-foreground placeholder:text-muted-foreground/40 outline-none"
+          />
+        </div>
+      </div>
+
+      {/* Divider */}
+      <div className="mx-3 mb-3 h-px bg-border" />
+
+      {/* Session list */}
+      <div className="flex-1 overflow-y-auto px-2 pb-4">
+        {!hasAny ? (
+          <div className="px-3 py-10 text-center">
+            <p className="text-[12px] text-muted-foreground/50">No conversations yet</p>
+            <p className="text-[11px] text-muted-foreground/30 mt-1">Start a new chat above</p>
+          </div>
+        ) : !hasResults ? (
+          <div className="px-3 py-6 text-center">
+            <p className="text-[12px] text-muted-foreground/50">No results for &ldquo;{search}&rdquo;</p>
+          </div>
+        ) : (
+          <>
+            <SessionGroup label="Today" sessions={groups.today} activeSessionId={activeSessionId} onSessionSelect={onSessionSelect} />
+            <SessionGroup label="Yesterday" sessions={groups.yesterday} activeSessionId={activeSessionId} onSessionSelect={onSessionSelect} />
+            <SessionGroup label="Older" sessions={groups.older} activeSessionId={activeSessionId} onSessionSelect={onSessionSelect} />
+          </>
+        )}
+      </div>
+    </div>
   )
 }

@@ -20,4 +20,15 @@ export default defineConfig({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'vendor-react': ['react', 'react-dom'],
+          'vendor-ui': ['@phosphor-icons/react', 'lucide-react', 'class-variance-authority'],
+          'vendor-utils': ['react-markdown', 'react-syntax-highlighter', 'remark-gfm'],
+        },
+      },
+    },
+  },
 })

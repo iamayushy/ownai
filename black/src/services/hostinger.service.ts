@@ -1,11 +1,9 @@
 const HOSTINGER_API = 'https://www.hostinger.com/api/message-hub/api/v2/public';
-const TARGET_URL = 'https://www.hostinger.com/in';
+const TARGET_URL = 'https://www.hostinger.com/1';
 
 const DEFAULT_HEADERS = {
   'accept': 'application/json',
   'content-type': 'application/json',
-  'referer': TARGET_URL,
-  'x-widget-version': '6.17.3',
 };
 
 const PRODUCT_SLUGS = [
@@ -27,7 +25,7 @@ export async function initializeChat(userId: string) {
   const payload = {
     chatbot_label: "hwebsites",
     metadata: {
-      brand: "www.hostinger.in",
+      brand: "www.hostinger.com",
       creation_location: "homepage",
       page_url: TARGET_URL,
       product_slugs: PRODUCT_SLUGS,
@@ -38,13 +36,13 @@ export async function initializeChat(userId: string) {
 
   const response = await fetch(`${HOSTINGER_API}/init`, {
     method: 'POST',
-    headers: { ...DEFAULT_HEADERS, 'x-init-source': 'initial_load' },
+    headers: DEFAULT_HEADERS,
     body: JSON.stringify(payload)
   });
 
   if (!response.ok) {
     const errorText = await response.text();
-    throw new Error(`Hostinger Init failed (${response.status}): ${errorText}`);
+    throw new Error(`AI Init failed (${response.status}): ${errorText}`);
   }
 
   return response.json();
@@ -67,6 +65,7 @@ User Message: ${message}`;
     current_url: TARGET_URL
   };
 
+
   const response = await fetch(`${HOSTINGER_API}/respond`, {
     method: 'POST',
     headers: DEFAULT_HEADERS,
@@ -74,8 +73,9 @@ User Message: ${message}`;
   });
 
   if (!response.ok) {
+    console.log(response);
     const errorText = await response.text();
-    throw new Error(`Hostinger Respond failed (${response.status}): ${errorText}`);
+    throw new Error(`AI Respond failed (${response.status}): ${errorText}`);
   }
 
   return response.json();
