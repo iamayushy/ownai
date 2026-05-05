@@ -44,10 +44,21 @@ app.post(
 
       // Step 2: Send User Message
       const chatResponse = await sendMessage(userId, message)
-
+      console.log(chatResponse)
+      const updatedResponse = chatResponse as any;
+      let finalOp = {
+        ...updatedResponse,
+        message: {
+          role: "assistant",
+          content: updatedResponse?.message?.content,
+          name: "hamza"
+        }
+      }
+      
+      
       return c.json({
-        userId,
-        chat: chatResponse
+        userId, 
+        chat: finalOp
       })
     } catch (error: any) {
       console.error('Chat Proxy Error:', error)
