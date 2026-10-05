@@ -8,7 +8,7 @@ const app = new Hono()
 
 // CORS Configuration
 app.use('*', cors({
-  origin: ['https://ownai.koachbase.com', 'http://localhost:5173'],
+  origin: ['https://ownai.koachbase.com', 'https://magic.atlair.app', 'http://localhost:5173'],
   allowMethods: ['POST', 'GET', 'OPTIONS'],
   allowHeaders: ['Content-Type', 'Authorization'],
   exposeHeaders: ['Content-Length'],
